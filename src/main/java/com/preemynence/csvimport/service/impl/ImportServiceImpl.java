@@ -59,18 +59,10 @@ public class ImportServiceImpl implements ImportService {
 			row = new LinkedHashMap<>(columns);
 			for (int i = 1; i <= columns; ++i) {
 				String columnName = md.getColumnName(i);
-				if (columnName.equals("Red_DP_TS")) {
-					continue;
-				} else {
-					Map<String, Object> value = new LinkedHashMap<>();
-					value.put("TYPE", md.getColumnTypeName(i));
-					if (md.getColumnTypeName(i).equals("TINYINT") && rs.getByte(i) == -1) {
-						value.put("VALUE", "-1");
-					} else {
-						value.put("VALUE", rs.getObject(i));
-					}
-					row.put(columnName, value);
-				}
+				Map<String, Object> value = new LinkedHashMap<>();
+				value.put("TYPE", md.getColumnTypeName(i));
+				value.put("VALUE", rs.getObject(i));
+				row.put(columnName, value);
 			}
 			rows.add(row);
 		}

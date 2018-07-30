@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Map;
 
 @RestController
@@ -30,11 +31,7 @@ public class ImportData {
 
 	@ApiOperation(value = "Bulk import.", response = ResponseEntity.class, notes = "The file name is the table name , first row should be of columns names and rest of the rows as data.")
 	@PostMapping(value = "/bulkImport", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Map> bulkImport(@RequestPart MultipartFile multipartFile) throws IOException {
-		log.info("Saving from file :" + multipartFile.getOriginalFilename());
-		String tableName = multipartFile.getOriginalFilename();
-		tableName = tableName.substring(0, tableName.lastIndexOf("."));
-		log.info(tableName);
+	public ResponseEntity<Map> bulkImport(@RequestPart MultipartFile multipartFile) throws IOException, SQLException {
 		return new ResponseEntity(importService.saveBulkRecords(multipartFile), HttpStatus.OK);
 	}
 

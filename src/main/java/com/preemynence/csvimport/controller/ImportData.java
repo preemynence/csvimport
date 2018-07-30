@@ -21,7 +21,7 @@ import java.util.Map;
 public class ImportData {
 
 	@Autowired
-	ImportService importService;
+	private ImportService importService;
 
 	@GetMapping("/test")
 	public String test() {

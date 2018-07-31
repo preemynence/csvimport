@@ -1,5 +1,6 @@
 package com.preemynence.csvimport.service.impl;
 
+import com.opencsv.CSVReader;
 import com.preemynence.csvimport.dao.Connections;
 import com.preemynence.csvimport.service.ImportService;
 import lombok.extern.slf4j.Slf4j;
@@ -7,6 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.*;
 import java.util.*;
 
@@ -29,7 +34,50 @@ public class ImportServiceImpl implements ImportService {
 
 		System.out.print(metadata);
 
+		List csvData = getCSVData(multipartFile);
+
 		connections.closeConnections(con);
+		return null;
+	}
+
+	private List getCSVData(MultipartFile multipartFile) {
+		try {
+			BufferedReader br;
+			CSVReader reader;
+			String line;
+			InputStream is = multipartFile.getInputStream();
+			br = new BufferedReader(new InputStreamReader(is));
+			List<Map<String, Object>> result = new ArrayList<>();
+			List<String> keys = new ArrayList<>();
+			boolean isFirst = true;
+			while ((line = br.readLine()) != null) {
+				if (isFirst) {
+					System.out.print("HEADER : ");
+				} else {
+					System.out.print("DATA : ");
+				}
+				reader = new CSVReader(new StringReader(line));
+				String[] record;
+				while ((record = reader.readNext()) != null) {
+					Map<String, Object> data = new HashMap<>();
+					if (isFirst) {
+						for (int i = 0; i < record.length; i++) {
+							keys.add(record[i]);
+						}
+					} else {
+						for (int i = 0; i < record.length; i++) {
+							data.put(keys.get(i), record[i]);
+						}
+						result.add(data);
+					}
+				}
+				isFirst = false;
+			}
+			System.out.println(result);
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 

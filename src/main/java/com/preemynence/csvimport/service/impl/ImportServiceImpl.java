@@ -36,8 +36,38 @@ public class ImportServiceImpl implements ImportService {
 
 		List csvData = getCSVData(multipartFile);
 
+		insertData(con, tableName, metadata, csvData);
+
 		connections.closeConnections(con);
 		return null;
+	}
+
+	private void insertData(Connection con, String tableName, Map<String, Map<String, Object>> metadata, List<Map<String, Object>> csvData) throws SQLException {
+		PreparedStatement stmt = null;
+		for (Map<String, Object> row : csvData) {
+			StringBuilder columns = new StringBuilder();
+			StringBuilder values = new StringBuilder();
+			String query = "INSERT INTO " + tableName + " ";
+			for (String key : metadata.keySet()) {
+				if (metadata.get(key).get("TYPE").equals("VARCHAR")) {
+					System.out.println("Column : " + key);
+					columns.append("," + key);
+					System.out.println("Data : " + row.get(key));
+					values.append(",'" + row.get(key) + "'");
+				} else {
+					System.out.println("Column : " + key);
+					columns.append("," + key);
+					System.out.println("Data : " + row.get(key));
+					values.append("," + row.get(key));
+				}
+			}
+			query = query + "(" + columns.substring(1) + ") VALUES (" + values.substring(1) + ")";
+			System.out.println(query);
+			stmt = con.prepareStatement(query);
+			stmt.executeUpdate();
+		}
+		if (stmt != null)
+			stmt.close();
 	}
 
 	private List getCSVData(MultipartFile multipartFile) {
@@ -62,11 +92,11 @@ public class ImportServiceImpl implements ImportService {
 					Map<String, Object> data = new HashMap<>();
 					if (isFirst) {
 						for (int i = 0; i < record.length; i++) {
-							keys.add(record[i]);
+							keys.add(record[i].trim());
 						}
 					} else {
 						for (int i = 0; i < record.length; i++) {
-							data.put(keys.get(i), record[i]);
+							data.put(keys.get(i), record[i].trim());
 						}
 						result.add(data);
 					}
@@ -93,7 +123,6 @@ public class ImportServiceImpl implements ImportService {
 			obj.put("TYPE", resultSet.getString("TYPE_NAME"));
 			result.put(resultSet.getString("COLUMN_NAME"), obj);
 		}
-		connection.close();
 		return result;
 	}
 

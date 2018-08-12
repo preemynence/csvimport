@@ -2,6 +2,7 @@ package com.preemynence.csvimport.service.impl;
 
 import com.opencsv.CSVReader;
 import com.preemynence.csvimport.dao.Connections;
+import com.preemynence.csvimport.dao.DataTypes;
 import com.preemynence.csvimport.service.ImportService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,16 +50,25 @@ public class ImportServiceImpl implements ImportService {
 			StringBuilder values = new StringBuilder();
 			String query = "INSERT INTO " + tableName + " ";
 			for (String key : metadata.keySet()) {
-				if (metadata.get(key).get("TYPE").equals("VARCHAR")) {
-					System.out.println("Column : " + key);
-					columns.append("," + key);
-					System.out.println("Data : " + row.get(key));
-					values.append(",'" + row.get(key) + "'");
-				} else {
-					System.out.println("Column : " + key);
-					columns.append("," + key);
-					System.out.println("Data : " + row.get(key));
-					values.append("," + row.get(key));
+				DataTypes type = (DataTypes) metadata.get(key).get("TYPE");
+				switch (type.isQuotesRequired()) {
+					case "":
+						System.out.println("Column : " + key);
+						columns.append("," + key);
+						System.out.println("Data : " + row.get(key));
+						values.append("," + row.get(key));
+						continue;
+					case "'":
+						System.out.println("Column : " + key);
+						columns.append("," + key);
+						System.out.println("Data : " + row.get(key));
+						if (row.get(key) == null || row.get(key).equals("")) {
+							values.append(",null");
+						} else {
+							values.append(",'" + row.get(key) + "'");
+						}
+						continue;
+					default:
 				}
 			}
 			query = query + "(" + columns.substring(1) + ") VALUES (" + values.substring(1) + ")";
@@ -120,7 +130,8 @@ public class ImportServiceImpl implements ImportService {
 		while (resultSet.next()) {
 			Map<String, Object> obj = new HashMap<>();
 			obj.put("VALUE", null);
-			obj.put("TYPE", resultSet.getString("TYPE_NAME"));
+			obj.put("TYPE", DataTypes.valueOf(resultSet.getString("TYPE_NAME").toUpperCase()));
+			if (!resultSet.getString("COLUMN_NAME").equals("id"))
 			result.put(resultSet.getString("COLUMN_NAME"), obj);
 		}
 		return result;
